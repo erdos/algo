@@ -35,9 +35,11 @@ class TreeZipperTest {
         TreeZipper<TestTree> down = zipper.down().get();
         assertFalse(down.left().isPresent());
         assertFalse(down.right().isPresent());
-        assertFalse(down.up().isPresent());
+
+        assertTrue(down.up().isPresent());
 
         assertEquals("b", down.node().node);
+        assertEquals("a", down.up().get().node().node);
     }
 
     @Test
@@ -49,7 +51,10 @@ class TreeZipperTest {
         TreeZipper<TestTree> down2 = zipper.down().get().down().get();
 
         assertEquals(down.up().get(), zipper);
+        assertEquals(down.up().get().node(), zipper.node());
+
         assertEquals(down2.up().get(), down);
+        assertEquals(down2.up().get().node(), down.node());
     }
 
     @Test
@@ -108,6 +113,14 @@ class TreeZipperTest {
         @Override
         public int hashCode() {
             return Objects.hash(node, children);
+        }
+
+        @Override
+        public String toString() {
+            return "TestTree{" +
+                    "node='" + node + '\'' +
+                    ", children=" + children +
+                    '}';
         }
     }
 }

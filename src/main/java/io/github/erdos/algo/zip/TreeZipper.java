@@ -1,7 +1,9 @@
 package io.github.erdos.algo.zip;
 
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Stack;
 
 @SuppressWarnings("WeakerAccess")
 public final class TreeZipper<N> {
@@ -118,21 +120,46 @@ public final class TreeZipper<N> {
         if (up == null) {
             return Optional.empty();
         } else {
-            throw new IllegalStateException("Not impled");
+            final N parent = up.head;
+            if (up.tail == null) {
+                return Optional.of(new TreeZipper<>(parent, null, null, null, factory));
+            } else {
+                final N grandparent = up.tail.head;
+                final Iterable<N> aunts = factory.children(grandparent);
+
+                final Cons<N> rights2 = Cons.fromIterable(aunts);
+                return Optional.of(new TreeZipper<>(parent, null, rights2, up.tail, factory));
+            }
         }
     }
 
+    // TODO: somewhere we should update node with siblings!!!
     public Optional<TreeZipper<N>> down() {
         Iterator<N> ch = factory.children(current).iterator();
         if (ch.hasNext()) {
+
             final N firstChild = ch.next();
 
-            Cons<N> lefts = null;
-            Cons<N> rights = null;
-            return Optional.of(new TreeZipper<>(firstChild, lefts, rights, this.up, factory));
+            Cons<N> lefts = null; // TODO: impl
+            Cons<N> rights = null; // TODO: impl
+
+            return Optional.of(new TreeZipper<>(firstChild, lefts, rights, new Cons<>(current, this.up), factory));
         } else {
             return Optional.empty();
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        TreeZipper<?> that = (TreeZipper<?>) o;
+        return Objects.equals(current, that.current);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(current);
     }
 
     private final static class Cons<M> {
@@ -142,6 +169,19 @@ public final class TreeZipper<N> {
         private Cons(M head, Cons<M> tail) {
             this.head = head;
             this.tail = tail;
+        }
+
+        // yeah so this could be better.
+        static <M> Cons<M> fromIterable(Iterable<M> source) {
+            final Stack<M> stack = new Stack<>();
+
+            source.forEach(stack::push);
+
+            Cons<M> tail = null;
+            for (M m : stack) {
+                tail = new Cons<>(m, tail);
+            }
+            return tail;
         }
     }
 
