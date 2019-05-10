@@ -2,10 +2,7 @@ package io.github.erdos.algo.zip;
 
 import org.junit.jupiter.api.Test;
 
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 import static io.github.erdos.algo.zip.TreeZipper.zipper;
 import static java.util.Arrays.asList;
@@ -16,7 +13,7 @@ class TreeZipperTest {
 
     @Test
     public void testEmptyOnRoot() {
-        TestTree data = new TestTree("a", asList(new TestTree("b", asList())));
+        TestTree data = new TestTree("a", new TestTree("b"));
         TreeZipper<TestTree> zipper = zipper(data, FACTORY);
 
         assertTrue(zipper.down().isPresent());
@@ -29,7 +26,7 @@ class TreeZipperTest {
 
     @Test
     public void testEmptyOnRoot2() {
-        TestTree data = new TestTree("a", asList(new TestTree("b", asList())));
+        TestTree data = new TestTree("a", new TestTree("b"));
         TreeZipper<TestTree> zipper = zipper(data, FACTORY);
 
         TreeZipper<TestTree> down = zipper.down().get();
@@ -44,7 +41,7 @@ class TreeZipperTest {
 
     @Test
     public void testUpDownIdempotent() {
-        TestTree data = new TestTree("a", asList(new TestTree("b", asList(new TestTree("c", asList())))));
+        TestTree data = new TestTree("a", new TestTree("b", new TestTree("c")));
         TreeZipper<TestTree> zipper = zipper(data, FACTORY);
 
         TreeZipper<TestTree> down = zipper.down().get();
@@ -58,8 +55,24 @@ class TreeZipperTest {
     }
 
     @Test
+    public void testFullCycle() {
+        TestTree data = new TestTree("a", new TestTree("b1"), new TestTree("b2", new TestTree("c")));
+        TreeZipper<TestTree> a = zipper(data, FACTORY);
+
+        TreeZipper<TestTree> b1 = a.down().get();
+        assertEquals("b1", b1.node().node);
+
+        TreeZipper<TestTree> b2 = b1.right().get();
+        assertEquals("b2", b2.node().node);
+
+        TreeZipper<TestTree> b2up = b2.up().get();
+
+        assertEquals(a, b2up);
+    }
+
+    @Test
     public void testEmptyLeft() {
-        TestTree data = new TestTree("a", asList(new TestTree("b", asList(new TestTree("c", asList())))));
+        TestTree data = new TestTree("a", new TestTree("b", new TestTree("c")));
         TreeZipper<TestTree> zipper = zipper(data, FACTORY);
 
         assertFalse(zipper.down().get().left().isPresent());
@@ -69,7 +82,7 @@ class TreeZipperTest {
 
     @Test
     public void testEmptyRight() {
-        TestTree data = new TestTree("a", asList(new TestTree("b", asList(new TestTree("c", asList())))));
+        TestTree data = new TestTree("a", new TestTree("b", new TestTree("c")));
         TreeZipper<TestTree> zipper = zipper(data, FACTORY);
 
         assertFalse(zipper.down().get().right().isPresent());
@@ -96,9 +109,20 @@ class TreeZipperTest {
         final String node;
         final Collection<TestTree> children;
 
+        TestTree(String node, TestTree... children) {
+            this.node = node;
+            this.children = asList(children);
+        }
+
         TestTree(String node, Collection<TestTree> children) {
             this.node = node;
             this.children = children;
+        }
+
+
+        TestTree(String node) {
+            this.node = node;
+            this.children = Collections.emptyList();
         }
 
         @Override

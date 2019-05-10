@@ -34,6 +34,9 @@ public final class TreeZipper<N> {
         return current;
     }
 
+    /**
+     * Returns the zipper on the closest left sibling if any.
+     */
     public Optional<TreeZipper<N>> left() {
         if (left == null) {
             return Optional.empty();
@@ -44,6 +47,9 @@ public final class TreeZipper<N> {
         }
     }
 
+    /**
+     * Returns the zipper on the rightmost sibling. Returns this when there are not right siblings.
+     */
     public TreeZipper<N> rightmost() {
         TreeZipper<N> right = this;
         Optional<TreeZipper<N>> r = right.right();
@@ -55,6 +61,9 @@ public final class TreeZipper<N> {
         return right;
     }
 
+    /**
+     * Returns the zipper on the leftmost sibling. Returns this when there are no left siblings.
+     */
     public TreeZipper<N> leftmost() {
         TreeZipper<N> left = this;
         Optional<TreeZipper<N>> r = left();
@@ -66,6 +75,9 @@ public final class TreeZipper<N> {
         return left;
     }
 
+    /**
+     * Returns the zipper on the closest right sibling if any.
+     */
     public Optional<TreeZipper<N>> right() {
         if (right == null) {
             return Optional.empty();
@@ -132,8 +144,7 @@ public final class TreeZipper<N> {
             }
         }
     }
-
-    // TODO: somewhere we should update node with siblings!!!
+    
     public Optional<TreeZipper<N>> down() {
         Iterator<N> ch = factory.children(current).iterator();
         if (ch.hasNext()) {
@@ -141,7 +152,8 @@ public final class TreeZipper<N> {
             final N firstChild = ch.next();
 
             Cons<N> lefts = null; // TODO: impl
-            Cons<N> rights = null; // TODO: impl
+
+            Cons<N> rights = Cons.fromIterator(ch);
 
             return Optional.of(new TreeZipper<>(firstChild, lefts, rights, new Cons<>(current, this.up), factory));
         } else {
@@ -173,9 +185,15 @@ public final class TreeZipper<N> {
 
         // yeah so this could be better.
         static <M> Cons<M> fromIterable(Iterable<M> source) {
+            return fromIterator(source.iterator());
+        }
+
+        static <M> Cons<M> fromIterator(Iterator<M> source) {
             final Stack<M> stack = new Stack<>();
 
-            source.forEach(stack::push);
+            while (source.hasNext()) {
+                stack.push(source.next());
+            }
 
             Cons<M> tail = null;
             for (M m : stack) {
@@ -183,6 +201,7 @@ public final class TreeZipper<N> {
             }
             return tail;
         }
+
     }
 
     interface Factory<T> {
