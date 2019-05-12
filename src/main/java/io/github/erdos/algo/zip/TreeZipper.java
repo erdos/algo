@@ -1,9 +1,6 @@
 package io.github.erdos.algo.zip;
 
-import java.util.Iterator;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Stack;
+import java.util.*;
 import java.util.function.Function;
 
 @SuppressWarnings("WeakerAccess")
@@ -26,9 +23,9 @@ public final class TreeZipper<N> {
         this.up = up;
         this.factory = factory;
 
-        if (current == null) {
-            throw new IllegalArgumentException("Can not construct node for null value!");
-        }
+        assert current != null;
+        assert left == null || left.head != current;
+        assert right == null || right.head != current;
     }
 
     public static <X> TreeZipper<X> zipper(X root, Factory<X> factory) {
@@ -86,7 +83,7 @@ public final class TreeZipper<N> {
             return Optional.empty();
         } else {
             Cons<N> left2 = new Cons<>(current, left);
-            TreeZipper<N> result = new TreeZipper<>(right.head, left2, right, up, factory);
+            TreeZipper<N> result = new TreeZipper<>(right.head, left2, right.tail, up, factory);
             return Optional.of(result);
         }
     }
@@ -135,7 +132,21 @@ public final class TreeZipper<N> {
         if (up == null) {
             return Optional.empty();
         } else {
-            final N parent = up.head;
+
+            final LinkedList<N> newChildren = new LinkedList<>();
+
+            for (Cons<N> item = left; item != null; item = item.tail) {
+                newChildren.addFirst(item.head);
+            }
+            newChildren.addLast(current);
+            for (Cons<N> item = right; item != null; item = item.tail) {
+                newChildren.addLast(item.head);
+            }
+
+            final N parent = factory.factory(up.head, newChildren);
+
+            // TODO: parent shall be modified so it contains current node and others.
+
             if (up.tail == null) {
                 return Optional.of(new TreeZipper<>(parent, null, null, null, factory));
             } else {
@@ -258,6 +269,11 @@ public final class TreeZipper<N> {
     @Override
     public int hashCode() {
         return Objects.hash(current);
+    }
+
+    @Override
+    public String toString() {
+        return "<zip: " + current.toString() + ">";
     }
 
     private final static class Cons<M> {
