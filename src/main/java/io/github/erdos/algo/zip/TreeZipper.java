@@ -1,6 +1,9 @@
 package io.github.erdos.algo.zip;
 
-import java.util.*;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Function;
 
 @SuppressWarnings("WeakerAccess")
@@ -26,6 +29,7 @@ public final class TreeZipper<N> {
         assert current != null;
         assert left == null || left.head != current;
         assert right == null || right.head != current;
+        assert up == null || up.head != current;
     }
 
     public static <X> TreeZipper<X> zipper(X root, Factory<X> factory) {
@@ -54,10 +58,9 @@ public final class TreeZipper<N> {
      */
     public TreeZipper<N> rightmost() {
         TreeZipper<N> right = this;
-        Optional<TreeZipper<N>> r = right.right();
-        while (r.isPresent()) {
-            right = r.get();
-            r = right.right();
+
+        for (Optional<TreeZipper<N>> rr = right.right(); rr.isPresent(); rr = right.right()) {
+            right = rr.get();
         }
         return right;
     }
@@ -67,10 +70,9 @@ public final class TreeZipper<N> {
      */
     public TreeZipper<N> leftmost() {
         TreeZipper<N> left = this;
-        Optional<TreeZipper<N>> r = left();
-        while (r.isPresent()) {
-            left = r.get();
-            r = left.left();
+
+        for (Optional<TreeZipper<N>> rr = left.left(); rr.isPresent(); rr = left.left()) {
+            left = rr.get();
         }
         return left;
     }
@@ -276,7 +278,7 @@ public final class TreeZipper<N> {
         return "<zip: " + current.toString() + ">";
     }
 
-    private final static class Cons<M> {
+    final static class Cons<M> {
         final M head;
         final Cons<M> tail;
 
@@ -291,10 +293,11 @@ public final class TreeZipper<N> {
         }
 
         static <M> Cons<M> fromIterator(Iterator<M> source) {
-            final Stack<M> stack = new Stack<>();
+            final LinkedList<M> stack = new LinkedList<>();
 
+            // we need to reverse source
             while (source.hasNext()) {
-                stack.push(source.next());
+                stack.addFirst(source.next());
             }
 
             Cons<M> tail = null;

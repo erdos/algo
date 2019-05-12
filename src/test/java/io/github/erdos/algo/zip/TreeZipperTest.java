@@ -89,6 +89,37 @@ class TreeZipperTest {
         assertFalse(zipper.down().get().down().get().right().isPresent());
     }
 
+    @Test
+    public void testLeftmostAndRightmost() {
+        TestTree data = new TestTree("a", new TestTree("b1"), new TestTree("b2"), new TestTree("b3"));
+        TreeZipper<TestTree> zipper = zipper(data, FACTORY);
+
+        assertEquals("b1", zipper.down().get().leftmost().node().node);
+        assertEquals("b3", zipper.down().get().rightmost().node().node);
+        assertEquals("b1", zipper.down().get().rightmost().leftmost().node().node);
+    }
+
+    @Test
+    public void testRight() {
+        TestTree data = new TestTree("a", new TestTree("b1"), new TestTree("b2"), new TestTree("b3"));
+        TreeZipper<TestTree> zipper = zipper(data, FACTORY);
+
+        assertEquals("b1", zipper.down().get().node().node);
+        assertEquals("b2", zipper.down().get().right().get().node().node);
+        assertEquals("b3", zipper.down().get().right().get().right().get().node().node);
+        assertFalse(zipper.down().get().right().get().right().get().right().isPresent());
+    }
+
+    @Test
+    public void testLeft() {
+        TestTree data = new TestTree("a", new TestTree("b1"), new TestTree("b2"), new TestTree("b3"));
+        TreeZipper<TestTree> zipper = zipper(data, FACTORY);
+
+        assertEquals("b1", zipper.down().get().node().node);
+        assertEquals("b1", zipper.down().get().right().get().left().get().node().node);
+        assertFalse(zipper.down().get().left().isPresent());
+    }
+
     public static final TreeZipper.Factory<TestTree> FACTORY = new TreeZipper.Factory<TestTree>() {
         @Override
         public Iterable<TestTree> children(TestTree node) {
@@ -146,5 +177,16 @@ class TreeZipperTest {
                     ", children=" + children +
                     '}';
         }
+    }
+
+    @Test
+    public void fromIterableTest() {
+        List<String> items = asList("a", "b", "c");
+        TreeZipper.Cons<String> cons = TreeZipper.Cons.fromIterable(items);
+
+        assertEquals("a", cons.head);
+        assertEquals("b", cons.tail.head);
+        assertEquals("c", cons.tail.tail.head);
+        assertNull(cons.tail.tail.tail);
     }
 }
