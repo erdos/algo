@@ -4,6 +4,7 @@ import java.util.Iterator;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Stack;
+import java.util.function.Function;
 
 @SuppressWarnings("WeakerAccess")
 public final class TreeZipper<N> {
@@ -24,6 +25,10 @@ public final class TreeZipper<N> {
         this.right = right;
         this.up = up;
         this.factory = factory;
+
+        if (current == null) {
+            throw new IllegalArgumentException("Can not construct node for null value!");
+        }
     }
 
     public static <X> TreeZipper<X> zipper(X root, Factory<X> factory) {
@@ -54,7 +59,6 @@ public final class TreeZipper<N> {
         TreeZipper<N> right = this;
         Optional<TreeZipper<N>> r = right.right();
         while (r.isPresent()) {
-            // empty
             right = r.get();
             r = right.right();
         }
@@ -68,7 +72,6 @@ public final class TreeZipper<N> {
         TreeZipper<N> left = this;
         Optional<TreeZipper<N>> r = left();
         while (r.isPresent()) {
-            // empty
             left = r.get();
             r = left.left();
         }
@@ -144,21 +147,104 @@ public final class TreeZipper<N> {
             }
         }
     }
-    
+
+    public Iterable<N> ups() {
+        return () -> new Iterator<N>() {
+            Cons<N> ups = up;
+
+            @Override
+            public boolean hasNext() {
+                return ups != null;
+            }
+
+            @Override
+            public N next() {
+                try {
+                    return ups.head;
+                } finally {
+                    ups = ups.tail;
+                }
+            }
+        };
+    }
+
+    /**
+     * Returns the zipper for the root of the tree.
+     */
+    public TreeZipper<N> upmost() {
+        TreeZipper<N> left = this;
+        Optional<TreeZipper<N>> r = up();
+        while (r.isPresent()) {
+            left = r.get();
+            r = left.up();
+        }
+        return left;
+    }
+
+    /**
+     * Returns the content of the root node.
+     */
+    public N root() {
+        return upmost().node();
+    }
+
+    /**
+     * Returns the zipper for the first child node of the current node if any.
+     */
     public Optional<TreeZipper<N>> down() {
         Iterator<N> ch = factory.children(current).iterator();
         if (ch.hasNext()) {
 
             final N firstChild = ch.next();
 
-            Cons<N> lefts = null; // TODO: impl
-
             Cons<N> rights = Cons.fromIterator(ch);
 
-            return Optional.of(new TreeZipper<>(firstChild, lefts, rights, new Cons<>(current, this.up), factory));
+            return Optional.of(new TreeZipper<>(firstChild, null, rights, new Cons<>(current, this.up), factory));
         } else {
             return Optional.empty();
         }
+    }
+
+    /**
+     * Edits the content of the current node.
+     */
+    public TreeZipper<N> edit(Function<N, N> edit) {
+        final N edited = edit.apply(this.current);
+        return new TreeZipper<>(edited, left, right, up, factory);
+    }
+
+    /**
+     * Replaces the content of the node in the current tree.
+     */
+    public TreeZipper<N> replace(N newContent) {
+        return edit(__ -> newContent);
+    }
+
+    /**
+     * Remoces current node from the tree and moves to the parent node if any.
+     */
+    public Optional<TreeZipper<N>> removeAndUp() {
+        // removes current node and goes up to parent
+        if (up == null) {
+            return Optional.empty();
+        } else {
+            //
+            throw new RuntimeException("Not impled!");
+        }
+    }
+
+    /**
+     * Returns the zipper for the next node on depth-first walk.
+     */
+    public Optional<TreeZipper<N>> next() {
+        throw new RuntimeException("Not impled!");
+    }
+
+    /**
+     * Returns the zipper for the previous node on depth-first walk.
+     */
+    public Optional<TreeZipper<N>> previous() {
+        throw new RuntimeException("Not impled!");
     }
 
     @Override
@@ -201,12 +287,13 @@ public final class TreeZipper<N> {
             }
             return tail;
         }
-
     }
 
     interface Factory<T> {
         Iterable<T> children(T node);
 
-        T factory(T prototype, Iterable<T> newChildren);
+        default T factory(T prototype, Iterable<T> newChildren) {
+            throw new IllegalStateException("Modification of node is not supported!");
+        }
     }
 }
