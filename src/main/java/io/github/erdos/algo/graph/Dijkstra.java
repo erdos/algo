@@ -1,75 +1,88 @@
 package io.github.erdos.algo.graph;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.PriorityQueue;
+import java.util.*;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
-public class Dijkstra<N> {
+public final class Dijkstra<N> {
 
-    /*
-    private PriorityQueue<N> queue;
-    private final Map<N, Integer> distances = new HashMap<>();
+    private final Factory<N> factory;
 
-    private final Factory<N> factory = null; // TODO: initialize from ctor
+    public final static int QUEUE_INITIAL_CAPACITY = 16;
 
-    // true IFF node has already been processed...
-    private boolean visited(N node) {
-        return distances.containsKey(node);
+    public Dijkstra(Factory<N> factory) {
+        this.factory = factory;
     }
 
-    // Function for Dijkstra's Algorithm
-    public void dijkstra(List<List<Node>> adj, int src) {
-        this.adj = adj;
+    public Map<N, Integer> weightsMap(N source, N target) {
+        final Map<N, Integer> allDistances = new HashMap<>();
+        final PriorityQueue<N> queue = new PriorityQueue<>(QUEUE_INITIAL_CAPACITY, Comparator.comparing(allDistances::get));
 
-        for (int i = 0; i < V; i++)
-            dist[i] = Integer.MAX_VALUE;
+        queue.add(source);
 
-        // Add source node to the priority queue
-        pq.add(new Node(src, 0));
+        while (!queue.isEmpty()) {
+            final N node = queue.poll();
+            final Integer nodeWeight = allDistances.get(node);
 
-        // Distance to the source is 0
-        dist[src] = 0;
-        while (settled.size() != V) {
+            assert nodeWeight != null;
 
-            // remove the minimum distance node
-            // from the priority queue
-            int u = pq.remove().node;
+            final Map<N, Integer> neighbors = factory.neighbors(node);
 
-            // adding the node whose distance is
-            // finalized
-            settled.add(u);
-
-            e_Neighbours(u);
-        }
-    }
-
-    // Function to process all the neighbours
-    // of the passed node
-    private void e_Neighbours(int u) {
-        int edgeDistance = -1;
-        int newDistance = -1;
-
-        // All the neighbors of v
-        for (int i = 0; i < adj.get(u).size(); i++) {
-            Node v = adj.get(u).get(i);
-
-            // If current node hasn't already been processed
-            if (!settled.contains(v.node)) {
-                edgeDistance = v.cost;
-                newDistance = dist[u] + edgeDistance;
-
-                // If new distance is cheaper in cost
-                if (newDistance < dist[v.node])
-                    dist[v.node] = newDistance;
-
-                // Add the current node to the queue
-                pq.add(new Node(v.node, dist[v.node]));
+            for (Map.Entry<N, Integer> entry : neighbors.entrySet()) {
+                N neighbor = entry.getKey();
+                int neighborDistance = entry.getValue();
+                int neighborWeight = nodeWeight + neighborDistance;
+                if (allDistances.containsKey(neighbor)) {
+                    Integer currentNeighborWeight = allDistances.get(neighbor);
+                    if (currentNeighborWeight > neighborWeight) {
+                        // ha talaltunk rovidebb utat, akkor frissitjuk az eddigit
+                        allDistances.put(neighbor, neighborWeight);
+                        queue.add(neighbor);
+                        // ha talaltunk rovidebb utat
+                    }
+                } else {
+                    allDistances.put(neighbor, neighborWeight);
+                    queue.add(neighbor);
+                }
             }
         }
+        return allDistances;
     }
-*/
-    interface Factory<N> {
+
+    // does not work!!
+    private N nextStep(Map<N, Integer> weights, N source) {
+        return factory.neighbors(source).entrySet().stream().min(Comparator.comparing(Map.Entry::getValue)).get().getKey();
+    }
+
+    public Iterator<N> path(N source, N target) {
+        final Map<N, Integer> weights = weightsMap(source, target);
+
+        return new Iterator<N>() {
+            N current = source;
+            @Override
+            public boolean hasNext() {
+                return current != target;
+            }
+
+            @Override
+            public N next() {
+                current = nextStep(weights, current);
+                return current;
+            }
+        };
+    }
+
+    public Spliterator<N> pathSpliterator(N source, N target) {
+        final Iterator<N> p = path(source, target);
+        return Spliterators.spliterator(p, Long.MAX_VALUE, 0);
+    }
+
+    public Stream<N> pathStream(N source, N target) {
+        final Spliterator<N> spliterator = pathSpliterator(source, target);
+        return StreamSupport.stream(spliterator, false);
+    }
+
+    public interface Factory<N> {
         Map<N, Integer> neighbors(N node);
     }
 }
