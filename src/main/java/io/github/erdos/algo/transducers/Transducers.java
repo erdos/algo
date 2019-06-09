@@ -1,18 +1,29 @@
 package io.github.erdos.algo.transducers;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 @SuppressWarnings("WeakerAccess")
 public final class Transducers {
 
     public static <X, Y> Transducer<X, Y> map(Function<Y, X> fn) {
-
         return new Transducer<X, Y>() {
             @Override
             public <A> Reducer<A, Y> transform(Reducer<A, X> rf) {
                 return (accumulator, item) -> rf.reduce(accumulator, fn.apply(item));
+            }
+        };
+    }
+
+    public static <X, Y> Transducer<X, Y> concatMap(Function<Y, Reducible<X>> fn) {
+        return new Transducer<X, Y>() {
+            @Override
+            public <A> Reducer<A, Y> transform(Reducer<A, X> rf) {
+                return (accumulator, item) -> fn.apply(item).reduce(accumulator, rf);
             }
         };
     }
@@ -59,5 +70,40 @@ public final class Transducers {
 
     public static <S, T> List<T> intoList(Transducer<T, S> tr, Collection<S> source) {
         return into(new ArrayList<>(), tr, source);
+    }
+
+    public static <S, T> Stream<T> intoStream(Transducer<T, S> tr, Collection<S> source) {
+        return StreamSupport.stream(intoSpliterator(tr, source), false);
+    }
+
+    public static <S, T> Spliterator<T> intoSpliterator(Transducer<T, S> tr, Collection<S> source) {
+        Iterator<S> so = source.iterator();
+
+        return new Spliterator<T>() {
+            @Override
+            public boolean tryAdvance(Consumer<? super T> consumer) {
+                if (so.hasNext()) {
+                    tr.transform(Reducer.intoConsumer()).reduce(consumer, so.next());
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+
+            @Override
+            public Spliterator<T> trySplit() {
+                return null;
+            }
+
+            @Override
+            public long estimateSize() {
+                return Long.MAX_VALUE;
+            }
+
+            @Override
+            public int characteristics() {
+                return 0;
+            }
+        };
     }
 }
