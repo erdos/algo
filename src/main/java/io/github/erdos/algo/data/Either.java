@@ -74,6 +74,14 @@ public final class Either<L, R> {
         return new Either<>(right, left);
     }
 
+    public boolean isLeft() {
+        return left != null;
+    }
+
+    public boolean isRight() {
+        return right != null;
+    }
+
     public Either<L, R> replace(Function<L, R> leftToRight, Function<R, L> rightToLeft) {
         return accept(new Visitor<L, R, Either<L, R>>() {
             @Override
