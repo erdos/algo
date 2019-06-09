@@ -70,6 +70,24 @@ public final class Either<L, R> {
         return Optional.ofNullable(right);
     }
 
+    public Either<R, L> flip() {
+        return new Either<>(right, left);
+    }
+
+    public Either<L, R> replace(Function<L, R> leftToRight, Function<R, L> rightToLeft) {
+        return accept(new Visitor<L, R, Either<L, R>>() {
+            @Override
+            public Either<L, R> left(L left) {
+                return Either.right(leftToRight.apply(left));
+            }
+
+            @Override
+            public Either<L, R> right(R right) {
+                return Either.left(rightToLeft.apply(right));
+            }
+        });
+    }
+
     public <X> X accept(Visitor<L, R, X> visitor) {
         if (this.left != null) {
             return visitor.left(left);
