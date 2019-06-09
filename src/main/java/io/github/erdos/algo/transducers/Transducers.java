@@ -7,48 +7,57 @@ import java.util.function.Predicate;
 @SuppressWarnings("WeakerAccess")
 public final class Transducers {
 
-    public static <A, X, Y> Transducer<A, X, Y> map(Function<Y, X> fn) {
-        return rf -> (Reducer<A, Y>) (accumulator, item) -> rf.reduce(accumulator, fn.apply(item));
-    }
+    public static <X, Y> Transducer<X, Y> map(Function<Y, X> fn) {
 
-    public static <A, X> Transducer<A, X, X> filter(Predicate<X> pred) {
-        return rf -> (a, x) -> {
-            if (pred.test(x)) {
-                return rf.reduce(a, x);
-            } else {
-                return a;
+        return new Transducer<X, Y>() {
+            @Override
+            public <A> Reducer<A, Y> transform(Reducer<A, X> rf) {
+                return (accumulator, item) -> rf.reduce(accumulator, fn.apply(item));
             }
         };
     }
 
-    public static <A, X> Transducer<A, X, X> remove(Predicate<X> pred) {
+    public static <X> Transducer<X, X> filter(Predicate<X> pred) {
+        return new Transducer<X, X>() {
+            @Override
+            public <A> Reducer<A, X> transform(Reducer<A, X> rf) {
+                return (accumulator, item) -> {
+                    if (pred.test(item)) {
+                        return rf.reduce(accumulator, item);
+                    } else {
+                        return accumulator;
+                    }
+                };
+            }
+        };
+    }
+
+    public static <X> Transducer<X, X> remove(Predicate<X> pred) {
         return filter(pred.negate());
     }
 
-    public static <A, X> Transducer<A, X, X> identity() {
-        return rf -> rf;
-    }
-
-    public static <T, C extends Collection<T>, S, X> C into(C target, Transducer<X, T, S> tr, Collection<S> source) {
-        Reducer<X, T> reducer0 = (a, e) -> {
-            target.add(e);
-            return a;
+    public static <X> Transducer<X, X> identity() {
+        return new Transducer<X, X>() {
+            @Override
+            public <A> Reducer<A, X> transform(Reducer<A, X> reducer) {
+                return reducer;
+            }
         };
-
-        Reducer<?, S> reducer = tr.transform(reducer0);
-
-        source.forEach(item -> {
-            reducer.reduce(null, item);
-        });
-
-        return target;
     }
 
-    public static <X, S, T> Set<T> intoSet(Transducer<X, T, S> tr, Collection<S> source) {
+    public static <T, C extends Collection<T>, S> C into(C target, Transducer<T, S> tr, Reducible<S> source) {
+        return source.reduce(target, tr.transform(Reducer.intoCollection()));
+    }
+
+    public static <T, C extends Collection<T>, S> C into(C target, Transducer<T, S> tr, Collection<S> source) {
+        return into(target, tr, Reducible.of(source));
+    }
+
+    public static <S, T> Set<T> intoSet(Transducer<T, S> tr, Collection<S> source) {
         return into(new HashSet<>(), tr, source);
     }
 
-    public static <X, S, T> List<T> intoList(Transducer<X, T, S> tr, Collection<S> source) {
+    public static <S, T> List<T> intoList(Transducer<T, S> tr, Collection<S> source) {
         return into(new ArrayList<>(), tr, source);
     }
 }

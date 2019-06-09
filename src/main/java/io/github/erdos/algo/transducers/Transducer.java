@@ -1,12 +1,18 @@
 package io.github.erdos.algo.transducers;
 
 @FunctionalInterface
-public interface Transducer<A, X, Y> {
+public interface Transducer<X, Y> {
 
-    Reducer<A, Y> transform(Reducer<A, X> reducer);
+    <A> Reducer<A, Y> transform(Reducer<A, X> reducer);
 
     // TODO: methods of different count of args!
-    default <Z> Transducer<A, X, Z> comp(Transducer<A, Y, Z> transducer) {
-        return rf -> transducer.transform(this.transform(rf));
+    default <Z> Transducer<X, Z> comp(Transducer<Y, Z> transducer) {
+        final Transducer<X, Y> self = this;
+        return new Transducer<X, Z>() {
+            @Override
+            public <A> Reducer<A, Z> transform(Reducer<A, X> rf) {
+                return transducer.transform(self.transform(rf));
+            }
+        };
     }
 }

@@ -12,7 +12,7 @@ class TransducersTest {
 
     @Test
     public void testMap() {
-        Transducer<?, Integer, Integer> tr = Transducers.map(x -> x + 1);
+        Transducer<Integer, Integer> tr = Transducers.map(x -> x + 1);
 
         List<Integer> result = Transducers.intoList(tr, Arrays.asList(1, 2, 3, 4));
 
@@ -21,7 +21,7 @@ class TransducersTest {
 
     @Test
     public void testFilter() {
-        Transducer<?, Integer, Integer> even = Transducers.filter(x -> x % 2 == 0);
+        Transducer<Integer, Integer> even = Transducers.filter(x -> x % 2 == 0);
 
         List<Integer> result = Transducers.intoList(even, Arrays.asList(1, 2, 3, 4));
 
@@ -31,7 +31,7 @@ class TransducersTest {
 
     @Test
     public void testRemove() {
-        Transducer<?, Integer, Integer> even = Transducers.remove(x -> x % 2 == 0);
+        Transducer<Integer, Integer> even = Transducers.remove(x -> x % 2 == 0);
 
         List<Integer> result = Transducers.intoList(even, Arrays.asList(1, 2, 3, 4));
 
@@ -40,7 +40,7 @@ class TransducersTest {
 
     @Test
     public void testIdentity() {
-        Transducer<?, Integer, Integer> iden = Transducers.identity();
+        Transducer<Integer, Integer> iden = Transducers.identity();
 
         List<Integer> result = Transducers.intoList(iden, Arrays.asList(1, 2, 3, 4));
 
