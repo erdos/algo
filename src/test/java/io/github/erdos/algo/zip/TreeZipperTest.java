@@ -8,7 +8,7 @@ import static io.github.erdos.algo.zip.TreeZipper.zipper;
 import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.*;
 
-@SuppressWarnings({"ArraysAsListWithZeroOrOneArgument", "OptionalGetWithoutIsPresent"})
+@SuppressWarnings({"ArraysAsListWithZeroOrOneArgument", "OptionalGetWithoutIsPresent", "WeakerAccess"})
 class TreeZipperTest {
 
     @Test
@@ -77,7 +77,6 @@ class TreeZipperTest {
 
         assertFalse(zipper.down().get().left().isPresent());
         assertFalse(zipper.down().get().down().get().left().isPresent());
-
     }
 
     @Test
