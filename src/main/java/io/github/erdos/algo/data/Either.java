@@ -1,5 +1,6 @@
 package io.github.erdos.algo.data;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.function.Function;
@@ -108,5 +109,31 @@ public final class Either<L, R> {
         X left(L left);
 
         X right(R right);
+    }
+
+    @Override
+    public String toString() {
+        if (left != null) {
+            return "<Either:Left=" + left + ">";
+        } else {
+            return "<Either:Right=" + right + ">";
+        }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Either<?, ?> either = (Either<?, ?>) o;
+        return Objects.equals(left, either.left) && Objects.equals(right, either.right);
+    }
+
+    @Override
+    public int hashCode() {
+        if (left == null) {
+            return right.hashCode();
+        } else {
+            return left.hashCode();
+        }
     }
 }
