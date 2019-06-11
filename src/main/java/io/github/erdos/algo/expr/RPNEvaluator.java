@@ -13,7 +13,7 @@ public class RPNEvaluator {
 
     public Number evaluate(RPN input) {
         Stack<Number> stack = new Stack<>();
-        for (RPN.Item item : input) {
+        for (Item item : input) {
             item.apply(new RPN.ItemVisitor<Void>() {
                 @Override
                 public Void visitNumber(Number number) {
