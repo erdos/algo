@@ -3,6 +3,7 @@ package io.github.erdos.algo.data;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.Callable;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 @SuppressWarnings({"WeakerAccess", "unused"})
@@ -97,12 +98,24 @@ public final class Either<L, R> {
         });
     }
 
-    public <X> X accept(Visitor<L, R, X> visitor) {
+    public void accept(Consumer<L> consumeLeft, Consumer<R> consumeRight) {
         if (this.left != null) {
-            return visitor.left(left);
+            consumeLeft.accept(left);
         } else {
-            return visitor.right(right);
+            consumeRight.accept(right);
         }
+    }
+
+    public <X> X accept(Function<L, X> applyLeft, Function<R, X> applyRight) {
+        if (this.left != null) {
+            return applyLeft.apply(left);
+        } else {
+            return applyRight.apply(right);
+        }
+    }
+
+    public <X> X accept(Visitor<L, R, X> visitor) {
+        return accept(visitor::left, visitor::right);
     }
 
     public interface Visitor<L, R, X> {
