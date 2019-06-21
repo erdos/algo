@@ -11,6 +11,8 @@ A collection of fascinating algorithms.
 - Bloom filter
 - Caching and memoization implementations
 - Functional Tree Zippers
+- Common data types: Tuple, Either
+- Conjunctive Normal Form, Disjunctive Normal Form
 
 ## License
 

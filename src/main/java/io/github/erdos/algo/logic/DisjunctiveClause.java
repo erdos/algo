@@ -16,6 +16,7 @@ public final class DisjunctiveClause<A> {
 
 	private DisjunctiveClause(Set<Literal<A>> literals) {this.literals = literals;}
 
+	@SafeVarargs
 	public static <A> DisjunctiveClause<A> disjunction(Literal<A>... literals) {
 		return new DisjunctiveClause<>(new HashSet<>(asList(literals)));
 	}
@@ -26,7 +27,8 @@ public final class DisjunctiveClause<A> {
 		return new DisjunctiveClause<>(newLiterals);
 	}
 
-	public DisjunctiveClause<A> or(Literal<A>... orLiterals) {
+	@SafeVarargs
+	public final DisjunctiveClause<A> or(Literal<A>... orLiterals) {
 		Set<Literal<A>> newLiterals = new HashSet<>(literals);
 		newLiterals.addAll(Arrays.asList(orLiterals));
 		return new DisjunctiveClause<>(newLiterals);

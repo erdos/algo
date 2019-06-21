@@ -22,6 +22,11 @@ public final class DNF<A> {
 		return new DNF<>(cls);
 	}
 
+	@SafeVarargs
+	public final DNF<A> or(Literal<A>... literals) {
+		return or(ConjuctiveClause.conjunction(literals));
+	}
+
 	public DNF<A> or(Literal<A> c) {
 		Set<ConjuctiveClause<A>> cls = new HashSet<>(clauses);
 		cls.add(ConjuctiveClause.conjunction(c));

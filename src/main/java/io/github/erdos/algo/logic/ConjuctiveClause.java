@@ -16,6 +16,7 @@ public final class ConjuctiveClause<A> {
 
 	private ConjuctiveClause(Set<Literal<A>> literals) {this.literals = literals;}
 
+	@SafeVarargs
 	public static <A> ConjuctiveClause<A> conjunction(Literal<A>... literals) {
 		return new ConjuctiveClause<>(new HashSet<>(asList(literals)));
 	}
@@ -26,7 +27,8 @@ public final class ConjuctiveClause<A> {
 		return new ConjuctiveClause<>(newLiterals);
 	}
 
-	public ConjuctiveClause<A> and(Literal<A>... andLiterals) {
+	@SafeVarargs
+	public final ConjuctiveClause<A> and(Literal<A>... andLiterals) {
 		Set<Literal<A>> newLiterals = new HashSet<>(literals);
 		newLiterals.addAll(asList(andLiterals));
 		return new ConjuctiveClause<>(newLiterals);
