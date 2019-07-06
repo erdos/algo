@@ -33,6 +33,22 @@ public final class TreeZipper<N> {
             assert right == null || right.head != current;
             assert up == null || up.current != current;
         }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Node<?> node = (Node<?>) o;
+            return Objects.equals(left, node.left) &&
+                    Objects.equals(right, node.right) &&
+                    Objects.equals(up, node.up) &&
+                    Objects.equals(current, node.current);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(left, right, up, current);
+        }
     }
 
     private TreeZipper(Node<N> node, Factory<N> factory) {
@@ -93,7 +109,7 @@ public final class TreeZipper<N> {
             return Optional.empty();
         } else {
             Cons<N> left2 = new Cons<>(node.current, node.left);
-            TreeZipper<N> result = new TreeZipper<>(node.right.head, left2, node.right.tail, node.up);
+            Node<N> result = new Node<>(node.right.head, left2, node.right.tail, node.up);
             return Optional.of(new TreeZipper<>(result, factory));
         }
     }
@@ -339,6 +355,20 @@ public final class TreeZipper<N> {
                 tail = new Cons<>(m, tail);
             }
             return tail;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Cons<?> cons = (Cons<?>) o;
+            return Objects.equals(head, cons.head) &&
+                    Objects.equals(tail, cons.tail);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(head, tail);
         }
     }
 
