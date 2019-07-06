@@ -2,6 +2,7 @@ package io.github.erdos.algo.zip;
 
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
@@ -9,47 +10,54 @@ import java.util.function.Function;
 @SuppressWarnings("WeakerAccess")
 public final class TreeZipper<N> {
 
-    private final Cons<N> left;
-    private final Cons<N> right;
-
-    private final Cons<N> up;
-
-    // current node, not null.
-    private final N current;
-
     private final Factory<N> factory;
+    private final Node<N> node;
 
-    private TreeZipper(N current, Cons<N> left, Cons<N> right, Cons<N> up, Factory<N> factory) {
-        this.current = current;
-        this.left = left;
-        this.right = right;
-        this.up = up;
+    static class Node<N> {
+        private final Cons<N> left;
+        private final Cons<N> right;
+
+        private final Node<N> up;
+
+        // current node, not null.
+        private final N current;
+
+        Node(N current, Cons<N> left, Cons<N> right, Node<N> up) {
+            this.left = left;
+            this.right = right;
+            this.up = up;
+            this.current = current;
+
+            assert current != null;
+            assert left == null || left.head != current;
+            assert right == null || right.head != current;
+            assert up == null || up.current != current;
+        }
+    }
+
+    private TreeZipper(Node<N> node, Factory<N> factory) {
+        this.node = node;
         this.factory = factory;
-
-        assert current != null;
-        assert left == null || left.head != current;
-        assert right == null || right.head != current;
-        assert up == null || up.head != current;
     }
 
     public static <X> TreeZipper<X> zipper(X root, Factory<X> factory) {
-        return new TreeZipper<>(root, null, null, null, factory);
+        return new TreeZipper<>(new Node<>(root, null, null, null), factory);
     }
 
     public N node() {
-        return current;
+        return node.current;
     }
 
     /**
      * Returns the zipper on the closest left sibling if any.
      */
     public Optional<TreeZipper<N>> left() {
-        if (left == null) {
+        if (node.left == null) {
             return Optional.empty();
         } else {
-            Cons<N> right2 = new Cons<>(current, this.right);
-            TreeZipper<N> result = new TreeZipper<>(left.head, left.tail, right2, up, factory);
-            return Optional.of(result);
+            Cons<N> right2 = new Cons<>(node.current, node.right);
+            Node<N> result = new Node<>(node.left.head, node.left.tail, right2, node.up);
+            return Optional.of(new TreeZipper<>(result, factory));
         }
     }
 
@@ -81,18 +89,18 @@ public final class TreeZipper<N> {
      * Returns the zipper on the closest right sibling if any.
      */
     public Optional<TreeZipper<N>> right() {
-        if (right == null) {
+        if (node.right == null) {
             return Optional.empty();
         } else {
-            Cons<N> left2 = new Cons<>(current, left);
-            TreeZipper<N> result = new TreeZipper<>(right.head, left2, right.tail, up, factory);
-            return Optional.of(result);
+            Cons<N> left2 = new Cons<>(node.current, node.left);
+            TreeZipper<N> result = new TreeZipper<>(node.right.head, left2, node.right.tail, node.up);
+            return Optional.of(new TreeZipper<>(result, factory));
         }
     }
 
     public Iterable<N> lefts() {
         return () -> new Iterator<N>() {
-            Cons<N> lefts = left;
+            Cons<N> lefts = node.left;
 
             @Override
             public boolean hasNext() {
@@ -101,6 +109,9 @@ public final class TreeZipper<N> {
 
             @Override
             public N next() {
+                if (lefts == null) {
+                    throw new NoSuchElementException();
+                }
                 try {
                     return lefts.head;
                 } finally {
@@ -112,7 +123,7 @@ public final class TreeZipper<N> {
 
     public Iterable<N> rights() {
         return () -> new Iterator<N>() {
-            Cons<N> rights = right;
+            Cons<N> rights = node.right;
 
             @Override
             public boolean hasNext() {
@@ -121,6 +132,9 @@ public final class TreeZipper<N> {
 
             @Override
             public N next() {
+                if (rights == null) {
+                    throw new NoSuchElementException();
+                }
                 try {
                     return rights.head;
                 } finally {
@@ -131,39 +145,54 @@ public final class TreeZipper<N> {
     }
 
     public Optional<TreeZipper<N>> up() {
-        if (up == null) {
+        if (node.up == null) {
             return Optional.empty();
         } else {
 
             final LinkedList<N> newChildren = new LinkedList<>();
 
-            for (Cons<N> item = left; item != null; item = item.tail) {
+            for (Cons<N> item = node.left; item != null; item = item.tail) {
                 newChildren.addFirst(item.head);
             }
-            newChildren.addLast(current);
-            for (Cons<N> item = right; item != null; item = item.tail) {
+            newChildren.addLast(node.current);
+            for (Cons<N> item = node.right; item != null; item = item.tail) {
                 newChildren.addLast(item.head);
             }
 
-            final N parent = factory.factory(up.head, newChildren);
+            final N parent = factory.factory(node.up.current, newChildren);
 
-            // TODO: parent shall be modified so it contains current node and others.
-
-            if (up.tail == null) {
-                return Optional.of(new TreeZipper<>(parent, null, null, null, factory));
+            if (node.up.up == null) {
+            	Node<N> newNode = new Node<>(node.up.current, node.up.left, node.up.right, null);
+                return Optional.of(new TreeZipper<>(newNode, factory));
             } else {
-                final N grandparent = up.tail.head;
+                final N grandparent = node.up.up.current;
                 final Iterable<N> aunts = factory.children(grandparent);
 
                 final Cons<N> rights2 = Cons.fromIterable(aunts);
-                return Optional.of(new TreeZipper<>(parent, null, rights2, up.tail, factory));
+                Node<N> newNode = new Node<>(parent, null, rights2, node.up.up);
+                return Optional.of(new TreeZipper<>(newNode, factory));
             }
         }
     }
 
+
+    public TreeZipper<N> insertRight(N item) {
+        Cons<N> newLefts = new Cons<>(node.current, node.left);
+        Node<N> newNode = new Node<>(item, newLefts, node.right, node.up);
+        return new TreeZipper<>(newNode, factory);
+    }
+
+
+    public TreeZipper<N> insertLeft(N item) {
+        Cons<N> newRights = new Cons<>(node.current, node.right);
+        Node<N> newNode = new Node<>(item, node.left, newRights, node.up);
+        return new TreeZipper<>(newNode, factory);
+    }
+
+
     public Iterable<N> ups() {
         return () -> new Iterator<N>() {
-            Cons<N> ups = up;
+            Node<N> ups = node.up;
 
             @Override
             public boolean hasNext() {
@@ -172,10 +201,13 @@ public final class TreeZipper<N> {
 
             @Override
             public N next() {
+                if (ups == null) {
+                    throw new NoSuchElementException();
+                }
                 try {
-                    return ups.head;
+                    return ups.current;
                 } finally {
-                    ups = ups.tail;
+                    ups = ups.up;
                 }
             }
         };
@@ -205,14 +237,15 @@ public final class TreeZipper<N> {
      * Returns the zipper for the first child node of the current node if any.
      */
     public Optional<TreeZipper<N>> down() {
-        Iterator<N> ch = factory.children(current).iterator();
+        Iterator<N> ch = factory.children(node.current).iterator();
         if (ch.hasNext()) {
 
             final N firstChild = ch.next();
 
             Cons<N> rights = Cons.fromIterator(ch);
 
-            return Optional.of(new TreeZipper<>(firstChild, null, rights, new Cons<>(current, this.up), factory));
+            Node<N> result = new Node<>(firstChild, null, rights, this.node);
+            return Optional.of(new TreeZipper<>(result, factory));
         } else {
             return Optional.empty();
         }
@@ -222,15 +255,16 @@ public final class TreeZipper<N> {
      * Edits the content of the current node.
      */
     public TreeZipper<N> edit(Function<N, N> edit) {
-        final N edited = edit.apply(this.current);
-        return new TreeZipper<>(edited, left, right, up, factory);
+        final N edited = edit.apply(node.current);
+        Node<N> newNode = new Node<>(edited, node.left, node.right, node.up);
+        return new TreeZipper<>(newNode, factory);
     }
 
     /**
      * Replaces the content of the node in the current tree.
      */
     public TreeZipper<N> replace(N newContent) {
-        return edit(__ -> newContent);
+        return edit(ignored -> newContent);
     }
 
     /**
@@ -238,7 +272,7 @@ public final class TreeZipper<N> {
      */
     public Optional<TreeZipper<N>> removeAndUp() {
         // removes current node and goes up to parent
-        if (up == null) {
+        if (node.up == null) {
             return Optional.empty();
         } else {
             //
@@ -265,20 +299,20 @@ public final class TreeZipper<N> {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         TreeZipper<?> that = (TreeZipper<?>) o;
-        return Objects.equals(current, that.current);
+        return Objects.equals(node, that.node) && Objects.equals(factory, that.factory);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(current);
+        return Objects.hash(node, factory);
     }
 
     @Override
     public String toString() {
-        return "<zip: " + current.toString() + ">";
+        return "<zip: " + node.current.toString() + ">";
     }
 
-    final static class Cons<M> {
+    static final class Cons<M> {
         final M head;
         final Cons<M> tail;
 
