@@ -20,6 +20,17 @@ public class TransducersTest {
     }
 
     @Test
+    public void testComp() {
+        Transducer<Integer, Integer> mf1 = Transducers.map(x -> x + 1);
+        Transducer<Integer, Integer> mf2 = Transducers.map(x -> x * 2);
+
+        Transducer<Integer, Integer> tr = mf1.comp(mf2);
+        List<Integer> result = Transducers.intoList(tr, Arrays.asList(1, 2, 3, 4));
+
+        assertEquals(Arrays.asList(3, 5, 7, 9), result);
+    }
+
+    @Test
     public void testFilter() {
         Transducer<Integer, Integer> even = Transducers.filter(x -> x % 2 == 0);
 
