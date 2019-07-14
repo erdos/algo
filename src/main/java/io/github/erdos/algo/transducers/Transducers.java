@@ -76,14 +76,17 @@ public final class Transducers {
         return StreamSupport.stream(intoSpliterator(tr, source), false);
     }
 
+
     public static <S, T> Spliterator<T> intoSpliterator(Transducer<T, S> tr, Collection<S> source) {
         Iterator<S> so = source.iterator();
-
+        throw new RuntimeException("Not implemented!");
+        /*
         return new Spliterator<T>() {
             @Override
             public boolean tryAdvance(Consumer<? super T> consumer) {
                 if (so.hasNext()) {
-                    tr.transform(Reducer.intoConsumer()).reduce(consumer, so.next());
+                    tr.transform(Reducer.intoConsumer())
+                            .reduce(consumer, so.next());
                     return true;
                 } else {
                     return false;
@@ -105,5 +108,6 @@ public final class Transducers {
                 return 0;
             }
         };
+        */
     }
 }

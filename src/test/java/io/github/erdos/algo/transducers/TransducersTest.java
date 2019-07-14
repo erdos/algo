@@ -8,7 +8,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SuppressWarnings("WeakerAccess")
-class TransducersTest {
+public class TransducersTest {
 
     @Test
     public void testMap() {

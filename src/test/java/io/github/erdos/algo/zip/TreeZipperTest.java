@@ -9,7 +9,7 @@ import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SuppressWarnings({"ArraysAsListWithZeroOrOneArgument", "OptionalGetWithoutIsPresent", "WeakerAccess"})
-class TreeZipperTest {
+public class TreeZipperTest {
 
     @Test
     public void testEmptyOnRoot() {

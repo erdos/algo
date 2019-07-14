@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SuppressWarnings("ArraysAsListWithZeroOrOneArgument")
-class DepthFirstSearchTest {
+public class DepthFirstSearchTest {
 
     @Test
     void testEmptyWalk1() {

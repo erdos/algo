@@ -9,7 +9,7 @@ import java.util.function.Consumer;
 import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class MemoizeTest {
+public class MemoizeTest {
 
     @Test
     void testMemoize1() {
