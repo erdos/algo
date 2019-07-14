@@ -20,6 +20,15 @@ public class TransducersTest {
     }
 
     @Test
+    public void testTakeWhile() {
+        Transducer<Integer, Integer> tr = Transducers.takeWhile(x -> x > 0);
+
+        List<Integer> result = Transducers.intoList(tr, Arrays.asList(2, 1, -1, 2, -2, 4));
+
+        assertEquals(Arrays.asList(2, 1), result);
+    }
+
+    @Test
     public void testComp() {
         Transducer<Integer, Integer> mf1 = Transducers.map(x -> x + 1);
         Transducer<Integer, Integer> mf2 = Transducers.map(x -> x * 2);

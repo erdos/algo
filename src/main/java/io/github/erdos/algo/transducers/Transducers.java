@@ -43,6 +43,27 @@ public final class Transducers {
         };
     }
 
+    public static <X> Transducer<X, X> takeWhile(Predicate<X> pred) {
+        return new Transducer<X, X>() {
+            boolean taking = true;
+            @Override
+            public <A> Reducer<A, X> transform(Reducer<A, X> rf) {
+                return (accumulator, item) -> {
+                    if (taking) {
+                        if (pred.test(item)) {
+                            return rf.reduce(accumulator, item);
+                        } else {
+                            taking = false;
+                            return accumulator;
+                        }
+                    } else {
+                        return accumulator;
+                    }
+                };
+            }
+        };
+    }
+
     public static <X> Transducer<X, X> remove(Predicate<X> pred) {
         return filter(pred.negate());
     }
