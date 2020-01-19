@@ -11,6 +11,7 @@ A collection of fascinating algorithms.
 - Bloom filter
 - Caching and memoization implementations
 - Functional Tree Zippers
+- Metric functions: Jaccard distance
 
 ## License
 
