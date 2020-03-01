@@ -8,14 +8,14 @@ public enum SetSimilarity implements Metric<Set<?>, Double> {
         public Double distance(Set<?> first, Set<?> second) {
             if (first.isEmpty() && second.isEmpty()) return 1.0d;
             long isect = intersectionSize(first, second);
-            return ((double) isect) / (first.size() + second.size() - isect);        }
+            return 1.0 - ((double) isect) / (first.size() + second.size() - isect);        }
     },
 
     SORENSEN_DICE {
         @Override
         public Double distance(Set<?> first, Set<?> second) {
             if (first.isEmpty() && second.isEmpty()) return 1.0d;
-            return 2d * intersectionSize(first, second) / (first.size() + second.size());
+            return 1.0 - 2d * intersectionSize(first, second) / (first.size() + second.size());
         }
     };
 
